@@ -1,0 +1,46 @@
+version: '3.3'
+services:
+  postgres:
+    image: postgres
+    container_name: foodgrampost
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+
+  backend:
+    image: boaruzhan/foodgram_backend
+    volumes:
+      - static_value:/app/static/
+      - media_value:/app/media/
+    depends_on:
+      - postgres
+    env_file:
+      - ./.env
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db-1:5432/${POSTGRES_DB}"
+
+  frontend:
+    image: boaruzhan/foodgram_frontend
+    volumes:
+      - ../frontend/:/app/result_build/
+
+  nginx:
+    image: nginx:1.19.3
+    ports:
+     - "8000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ../frontend/build:/usr/share/nginx/html/
+      - ../docs/:/usr/share/nginx/html/api/docs/
+      - static_value:/var/html/django_static/
+      - media_value:/var/html/media/
+    depends_on:
+      - backend
+
+volumes:
+  static_value:
+  media_value:
+  pg_data:
